@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Psychology Content Analyzer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #07070f;
+      --surface: #0e0e1e;
+      --border: #1e1e3a;
+      --accent: #6c63ff;
+      --accent2: #ff6b6b;
+      --text: #e0e0ff;
+      --muted: #6060aa;
+      --success: #4ade80;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; min-height: 100vh; }
+    header {
+      text-align: center; padding: 32px 20px 24px;
+      background: linear-gradient(180deg, #0d0d20 0%, var(--bg) 100%);
+      border-bottom: 1px solid var(--border);
+    }
+    header .label { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 5px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+    header h1 { font-size: clamp(24px, 5vw, 36px); font-weight: 800; background: linear-gradient(90deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    header p { color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 12px; margin-top: 6px; }
+
+    .container { max-width: 740px; margin: 0 auto; padding: 24px 16px 60px; }
+
+    .api-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; margin-bottom: 24px; }
+    .api-box label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--muted); display: block; margin-bottom: 8px; }
+    .api-row { display: flex; gap: 8px; }
+    .api-row input { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none; }
+    .api-row input:focus { border-color: var(--accent); }
+    .icon-btn { background: var(--border); border: none; border-radius: 10px; padding: 10px 14px; color: var(--muted); cursor: pointer; font-size: 14px; }
+    .api-hint { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #3a3a7a; margin-top: 8px; }
+
+    .tabs { display: flex; gap: 6px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 6px; margin-bottom: 24px; }
+    .tab { flex: 1; padding: 10px 6px; border-radius: 10px; border: none; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; transition: all 0.2s; background: transparent; color: #4a4a8a; }
+    .tab.active { background: linear-gradient(135deg, #2a2a6a, #1a1a4a); color: #b0b0ff; box-shadow: 0 2px 12px rgba(108,99,255,0.2); }
+
+    .error { background: #1a0a0a; border: 1px solid #5a1a1a; border-radius: 12px; padding: 12px 16px; color: #ff8080; font-family: 'JetBrains Mono', monospace; font-size: 12px; margin-bottom: 16px; }
+
+    .search-row { display: flex; gap: 8px; margin-bottom: 14px; }
+    .search-row input { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; color: var(--text); font-family: 'JetBrains Mono', monospace; font-size: 13px; outline: none; }
+    .search-row input:focus { border-color: var(--accent); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #4a40cc); border: none; border-radius: 12px; padding: 12px 20px; color: #fff; cursor: pointer; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px; white-space: nowrap; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-full { width: 100%; padding: 14px; border-radius: 14px; margin-bottom: 20px; font-size: 14px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 20px; }
+    .chip { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 5px 12px; color: var(--muted); font-size: 11px; cursor: pointer; font-family: 'JetBrains Mono', monospace; transition: all 0.15s; }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
+
+    .video-card { background: linear-gradient(135deg, #0d0d1a, #12122a); border: 1px solid var(--border); border-radius: 16px; padding: 18px; margin-bottom: 14px; position: relative; overflow: hidden; }
+    .viral-badge { position: absolute; top: 0; right: 0; padding: 4px 12px; border-radius: 0 16px 0 12px; font-size: 11px; font-weight: 700; color: #fff; font-family: 'JetBrains Mono', monospace; }
+    .viral-high { background: #ff6b35; }
+    .viral-mid { background: #ffd700; color: #000; }
+    .viral-low { background: #4a4a8a; }
+    .card-inner { display: flex; gap: 14px; align-items: flex-start; }
+    .thumb { width: 110px; height: 62px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: var(--border); display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+    .card-info { flex: 1; min-width: 0; padding-right: 56px; }
+    .card-title { color: var(--text); font-size: 14px; font-weight: 700; margin-bottom: 4px; line-height: 1.4; }
+    .card-meta { color: var(--muted); font-size: 11px; font-family: 'JetBrains Mono', monospace; margin-bottom: 10px; }
+    .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+    .stat-item label { color: #7070aa; font-size: 10px; font-family: 'JetBrains Mono', monospace; display: block; margin-bottom: 2px; }
+    .stat-item span { font-size: 12px; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
+    .bar { background: #1a1a2e; border-radius: 4px; height: 5px; margin-top: 3px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease; }
+
+    .gap-card { border-radius: 14px; padding: 14px 16px; margin-bottom: 10px; border: 1px solid; }
+    .gap-card.gap { background: linear-gradient(135deg, #0a1a0a, #0d1a0d); border-color: #1a5a1a; }
+    .gap-card.no-gap { background: var(--surface); border-color: var(--border); }
+    .gap-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .gap-tag { background: #1a4a1a; color: #4aff4a; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+    .script-types { display: flex; gap: 6px; margin-bottom: 16px; }
+    .script-type { flex: 1; padding: 10px 8px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; transition: all 0.2s; }
+    .script-type.active { border-color: #6a2a8a; background: #1a1a4a; color: #d0a0ff; }
+
+    .script-output { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px; }
+    .script-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .script-label { color: var(--muted); font-size: 11px; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 2px; }
+    .copy-btn { background: var(--border); border: none; border-radius: 8px; padding: 4px 12px; color: var(--muted); cursor: pointer; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+    .script-text { color: #c0c0e8; font-size: 14px; font-family: 'Syne', sans-serif; line-height: 1.8; white-space: pre-wrap; }
+
+    .loader { text-align: center; padding: 40px; color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 14px; }
+    .spinner { font-size: 32px; display: block; margin-bottom: 12px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    input::placeholder { color: #3a3a7a; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="label">YouTube Intelligence</div>
+    <h1>Psychology Content Analyzer</h1>
+    <p>US Audience · Content Gaps · Viral Scripts</p>
+  </header>
+
+  <div class="container">
+    <div class="api-box">
+      <label>🔑 YouTube Data API v3 Key</label>
+      <div class="api-row">
+        <input type="password" id="apiKey" placeholder="AIza... paste your API key here" />
+        <button class="icon-btn" onclick="toggleKey()">👁️</button>
+      </div>
+      <p class="api-hint">console.cloud.google.com → YouTube Data API v3 → Enable → Create Credentials</p>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab(0)">🔍 Search & Analyze</button>
+      <button class="tab" onclick="switchTab(1)">📊 Content Gaps</button>
+      <button class="tab" onclick="switchTab(2)">🧠 AI Script</button>
+    </div>
+
+    <div id="errorBox" class="error" style="display:none"></div>
+
+    <!-- Tab 0: Search -->
+    <div class="panel active" id="tab0">
+      <div class="search-row">
+        <input type="text" id="searchQuery" placeholder="e.g. dark psychology manipulation tactics" onkeydown="if(event.key==='Enter')searchVideos()" />
+        <button class="btn-primary" id="searchBtn" onclick="searchVideos()">Search</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div id="videoResults"></div>
+    </div>
+
+    <!-- Tab 1: Content Gaps -->
+    <div class="panel" id="tab1">
+      <p style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;margin-bottom:20px;line-height:1.7">Top psychology topics ka YouTube competition scan karega aur content gaps identify karega.</p>
+      <button class="btn-primary btn-full" id="gapBtn" onclick="analyzeGaps()">🔍 Analyze Content Gaps</button>
+      <div id="gapResults"></div>
+    </div>
+
+    <!-- Tab 2: Script Generator -->
+    <div class="panel" id="tab2">
+      <p style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;margin-bottom:16px;line-height:1.7">AI se viral psychology scripts generate karo US audience ke liye.</p>
+      <input type="text" id="scriptTopic" placeholder="Topic: e.g. Why lonely people are more creative" style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;margin-bottom:12px" />
+      <div class="script-types">
+        <button class="script-type active" data-type="hook" onclick="setScriptType(this)">⚡ 60s Hook</button>
+        <button class="script-type" data-type="full" onclick="setScriptType(this)">📝 Full Script</button>
+        <button class="script-type" data-type="titles" onclick="setScriptType(this)">🎯 Title Ideas</button>
+      </div>
+      <button class="btn-primary btn-full" id="scriptBtn" onclick="generateScript()" style="background:linear-gradient(135deg,#4a1a6a,#2a1a5a);border:1px solid #6a2a8a">✨ Generate with AI</button>
+      <div id="scriptOutput"></div>
+    </div>
+  </div>
+
+  <script>
+    const PROXY = "/api/proxy";
+    const QUERIES = ["psychology of loneliness","anxiety explained","trauma healing","dark psychology manipulation","attachment styles relationships","narcissism toxic people","dopamine addiction social media","self worth confidence"];
+    let scriptType = "hook";
+
+    // Chips
+    const chipsEl = document.getElementById("chips");
+    QUERIES.forEach(q => {
+      const c = document.createElement("button");
+      c.className = "chip"; c.textContent = q;
+      c.onclick = () => { document.getElementById("searchQuery").value = q; searchVideos(); };
+      chipsEl.appendChild(c);
+    });
+
+    function toggleKey() {
+      const inp = document.getElementById("apiKey");
+      inp.type = inp.type === "password" ? "text" : "password";
+    }
+
+    function switchTab(i) {
+      document.querySelectorAll(".tab").forEach((t,j) => t.classList.toggle("active", i===j));
+      document.querySelectorAll(".panel").forEach((p,j) => p.classList.toggle("active", i===j));
+      hideError();
+    }
+
+    function setScriptType(el) {
+      document.querySelectorAll(".script-type").forEach(b => b.classList.remove("active"));
+      el.classList.add("active");
+      scriptType = el.dataset.type;
+    }
+
+    function showError(msg) {
+      const e = document.getElementById("errorBox");
+      e.textContent = "⚠️ " + msg; e.style.display = "block";
+    }
+    function hideError() { document.getElementById("errorBox").style.display = "none"; }
+
+    function getKey() { return document.getElementById("apiKey").value.trim(); }
+
+    function fmt(n) {
+      const num = parseInt(n||0);
+      if(num>=1e6) return (num/1e6).toFixed(1)+"M";
+      if(num>=1e3) return (num/1e3).toFixed(1)+"K";
+      return num.toString();
+    }
+
+    async function searchVideos() {
+      const key = getKey(); if(!key) { showError("API key daalo pehle!"); return; }
+      const q = document.getElementById("searchQuery").value.trim(); if(!q) { showError("Search query daalo!"); return; }
+      hideError();
+      const btn = document.getElementById("searchBtn"); btn.disabled = true; btn.textContent = "⏳";
+      const res = document.getElementById("videoResults");
+      res.innerHTML = '<div class="loader"><span class="spinner">⟳</span>Fetching YouTube data...</div>';
+      try {
+        const s = await fetch(`${PROXY}?endpoint=search&part=snippet&q=${encodeURIComponent(q)}&type=video&maxResults=10&relevanceLanguage=en&regionCode=US&key=${key}`);
+        const sd = await s.json();
+        if(sd.error) throw new Error(sd.error.message);
+        const ids = sd.items.map(i=>i.id.videoId).join(",");
+        const v = await fetch(`${PROXY}?endpoint=videos&part=statistics,snippet&id=${ids}&key=${key}`);
+        const vd = await v.json();
+        if(vd.error) throw new Error(vd.error.message);
+        res.innerHTML = vd.items.map(v => videoCard(v)).join("");
+      } catch(e) { showError(e.message); res.innerHTML = ""; }
+      btn.disabled = false; btn.textContent = "Search";
+    }
+
+    function videoCard(v) {
+      const s = v.statistics||{}, sn = v.snippet||{};
+      const views = parseInt(s.viewCount||0), likes = parseInt(s.likeCount||0), comments = parseInt(s.commentCount||0);
+      const eng = views > 0 ? (likes+comments)/views : 0;
+      const score = Math.min(100, Math.round(eng*1000 + views/1e6*20));
+      const badgeClass = score>70?"viral-high":score>40?"viral-mid":"viral-low";
+      const thumb = sn.thumbnails?.default?.url ? `<img src="${sn.thumbnails.default.url}" />` : "🎬";
+      const date = sn.publishedAt ? new Date(sn.publishedAt).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}) : "";
+      return `<div class="video-card">
+        <div class="viral-badge ${badgeClass}">🔥 ${score}/100</div>
+        <div class="card-inner">
+          <div class="thumb">${thumb}</div>
+          <div class="card-info">
+            <div class="card-title">${sn.title||"Untitled"}</div>
+            <div class="card-meta">${sn.channelTitle||""} · ${date}</div>
+            <div class="stats-grid">
+              <div class="stat-item"><label>👁️ Views</label><span style="color:#4ecdc4">${fmt(s.viewCount)}</span><div class="bar"><div class="bar-fill" style="width:${Math.min(views/1e7*100,100)}%;background:#4ecdc4"></div></div></div>
+              <div class="stat-item"><label>❤️ Likes</label><span style="color:#ff6b6b">${fmt(s.likeCount)}</span><div class="bar"><div class="bar-fill" style="width:${Math.min(likes/5e5*100,100)}%;background:#ff6b6b"></div></div></div>
+              <div class="stat-item"><label>💬 Comments</label><span style="color:#ffd700">${fmt(s.commentCount)}</span><div class="bar"><div class="bar-fill" style="width:${Math.min(comments/5e4*100,100)}%;background:#ffd700"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    async function analyzeGaps() {
+      const key = getKey(); if(!key) { showError("API key daalo!"); return; }
+      hideError();
+      const btn = document.getElementById("gapBtn"); btn.disabled = true; btn.textContent = "⏳ Scanning...";
+      const el = document.getElementById("gapResults");
+      el.innerHTML = '<div class="loader"><span class="spinner">⟳</span>Analyzing competition...</div>';
+      try {
+        const results = {};
+        for(const q of QUERIES.slice(0,6)) {
+          const r = await fetch(`${PROXY}?endpoint=search&part=snippet&q=${encodeURIComponent(q+" US")}&type=video&maxResults=5&relevanceLanguage=en&regionCode=US&key=${key}`);
+          const d = await r.json();
+          if(d.error) throw new Error(d.error.message);
+          const ids = d.items.map(i=>i.id.videoId).join(",");
+          const sr = await fetch(`${PROXY}?endpoint=videos&part=statistics&id=${ids}&key=${key}`);
+          const sd = await sr.json();
+          const avg = sd.items.reduce((s,v)=>s+parseInt(v.statistics?.viewCount||0),0)/(sd.items.length||1);
+          results[q] = Math.round(avg);
+        }
+        el.innerHTML = '<p style="color:var(--muted);font-size:11px;font-family:\'JetBrains Mono\',monospace;margin-bottom:14px;text-transform:uppercase;letter-spacing:2px">Competition Analysis</p>' +
+          Object.entries(results).sort((a,b)=>a[1]-b[1]).map(([topic,avg])=>{
+            const isGap = avg < 500000;
+            return `<div class="gap-card ${isGap?'gap':'no-gap'}">
+              <div class="gap-row">
+                <span style="color:var(--text);font-size:14px;font-weight:700">${topic}</span>
+                ${isGap?'<span class="gap-tag">💡 GAP FOUND</span>':''}
+              </div>
+              <div style="display:flex;gap:16px">
+                <span style="color:var(--muted);font-size:12px;font-family:\'JetBrains Mono\',monospace">Avg Views: <span style="color:${isGap?'#4aff4a':'#ffd700'}">${fmt(avg)}</span></span>
+                <span style="color:var(--muted);font-size:12px;font-family:\'JetBrains Mono\',monospace">Competition: <span style="color:${isGap?'#4aff4a':'#ff6b6b'}">${isGap?'🟢 Low':'🔴 High'}</span></span>
+              </div>
+            </div>`;
+          }).join("");
+      } catch(e) { showError(e.message); el.innerHTML = ""; }
+      btn.disabled = false; btn.textContent = "🔍 Analyze Content Gaps";
+    }
+
+    async function generateScript() {
+      const topic = document.getElementById("scriptTopic").value.trim();
+      if(!topic) { showError("Topic daalo!"); return; }
+      hideError();
+      const btn = document.getElementById("scriptBtn"); btn.disabled = true; btn.textContent = "⏳ AI writing...";
+      document.getElementById("scriptOutput").innerHTML = "";
+      const prompts = {
+        hook: `Write a VIRAL 60-second YouTube hook script for: "${topic}"\nFormat:\n- Opening shock line\n- 3 emotional amplifiers\n- The promise\n- CTA\nTarget: US psychology audience 22-35. Raw and real.`,
+        full: `Write a complete 5-minute YouTube script about: "${topic}"\nStructure: Hook (0-30s), Problem Setup (30s-1m), Story/Science (1-3m), Solution (3-4m), CTA (4-5m).\nTone: Conversational, empathetic, US psychology audience.`,
+        titles: `Generate 10 viral YouTube title ideas for: "${topic}"\nRules: Use power words, include numbers, tap fear/curiosity/transformation. US psychology audience.`
+      };
+      try {
+        const r = await fetch("/api/ai", {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify({ topic, type: scriptType, prompt: prompts[scriptType] })
+        });
+        const d = await r.json();
+        document.getElementById("scriptOutput").innerHTML = `
+          <div class="script-output">
+            <div class="script-header">
+              <span class="script-label">Generated Script</span>
+              <button class="copy-btn" onclick="navigator.clipboard.writeText(document.getElementById('scriptText').textContent)">📋 Copy</button>
+            </div>
+            <div class="script-text" id="scriptText">${d.text||"Error generating script"}</div>
+          </div>`;
+      } catch(e) { showError(e.message); }
+      btn.disabled = false; btn.textContent = "✨ Generate with AI";
+    }
+  </script>
+</body>
+</html>
