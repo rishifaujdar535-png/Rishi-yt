@@ -1,6 +1,7 @@
 {
   "rewrites": [
-    { "source": "/search", "destination": "/api/proxy" },
-    { "source": "/videos", "destination": "/api/proxy" }
+    { "source": "/api/proxy", "destination": "/api/proxy" },
+    { "source": "/api/ai", "destination": "/api/ai" },
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
